@@ -1,0 +1,76 @@
+#!/usr/bin/php
+<?php
+require_once 'util.php';
+require_once 'asextract.php';
+
+# get options
+$options=getopt('', array('sku:', 'user:', 'pass:', 'get', 'extract'));
+#var_dump($options);
+
+$user=getenv('AS_USER');
+if (!$user) $user=$options['user'];
+$pass=getenv('AS_PASS');
+if (!$pass) $pass=$options['pass'];
+$sku=getenv('AS_SKU');
+if (!$sku) $sku=intval($options["sku"]);
+$should_get=array_key_exists('get', $options);
+$should_extract=array_key_exists('extract', $options);
+
+$opts_ok=true;
+
+if (!$sku) {
+	$opts_ok=false;
+	p('Missing SKU');
+}
+
+
+if ($should_get&&(!$user||!$pass)) {
+	$opts_ok=false;	
+	p('Missing user and/or pass');
+}
+
+if (!$opts_ok) {
+	p('Usage:');
+	p('   --sku SKU           SKU for app (DwellClick=12, RapidClick=15, PopClip=19, Dropshelf=21)');	
+	p('  [--get]              Get data');
+	p('  [--extract]          Extract data');
+	p('  [--user USERNAME]    Apple ID username');	
+	p('  [--pass PASSWORD]    Apple ID password');	
+	p('');		
+	p('AS_USER, AS_PASS and AS_SKU environment variables may be set instead.');	
+	p('');		
+	exit(1);
+}
+
+p ("SKU is $sku");
+
+# get directories
+$working_dir=getcwd();
+$transporter_dir=trim(`xcode-select --print-path`).'/../Applications/Application Loader.app/Contents/MacOS/itms/bin';
+$data_dir=trim($working_dir).'/data';
+$text_dir=trim($working_dir).'/text';
+
+p('Working directory is ' . $working_dir);
+p('Transporter directory is ' . $transporter_dir);
+p('Data directory is ' . $data_dir);
+p('Text directory is ' . $text_dir);
+
+$output=NULL;
+$result=NULL;
+
+if ($should_get) {
+	p ("'get' option specified; getting data to $data_dir");
+	chdir($transporter_dir);
+	exec("./iTMSTransporter -m lookupMetadata -u $user -p $pass -vendor_id $sku -destination $data_dir", $output, $result);
+	chdir($working_dir);
+	if (!($result===0)) {
+		p('iTMSTransporter call failed');
+		exit(1);
+	}
+}
+
+if ($should_extract) {
+ 	p ("'extract' option sp[ecified; extracting data to $text_dir");
+	as_extract($data_dir, $sku, $text_dir);
+}
+?>
