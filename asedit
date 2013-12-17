@@ -5,7 +5,7 @@ require_once 'extract.php';
 require_once 'replace.php';
 
 # get options
-$options=getopt('', array('sku:', 'user:', 'pass:', 'get', 'extract', 'replace'));
+$options=getopt('', array('sku:', 'user:', 'pass:', 'get', 'extract', 'replace', 'verify', 'upload'));
 #var_dump($options);
 
 $user=getenv('AS_USER');
@@ -17,6 +17,8 @@ if (!$sku) $sku=intval($options["sku"]);
 $should_get=array_key_exists('get', $options);
 $should_extract=array_key_exists('extract', $options);
 $should_replace=array_key_exists('replace', $options);
+$should_verify=array_key_exists('verify', $options);
+$should_upload=array_key_exists('upload', $options);
 
 $opts_ok=true;
 
@@ -25,20 +27,21 @@ if (!$sku) {
 	p('Missing SKU');
 }
 
-
-if ($should_get&&(!$user||!$pass)) {
+if (($should_get||$should_verify||$should_upload)&&(!$user||!$pass)) {
 	$opts_ok=false;	
 	p('Missing user and/or pass');
 }
 
 if (!$opts_ok) {
 	p('Usage:');
-	p('   --sku SKU           SKU for app (DwellClick=12, RapidClick=15, PopClip=19, Dropshelf=21)');	
-	p('  [--get]              Get data');
-	p('  [--extract]          Extract data');
-	p('  [--replace]          Replace descriptions');
-	p('  [--user USERNAME]    Apple ID username');	
-	p('  [--pass PASSWORD]    Apple ID password');	
+	p('   --sku SKU           SKU for app');	
+	p('   --user USERNAME     Apple ID username');	
+	p('   --pass PASSWORD     Apple ID password');		
+	p('   --get               Get data (needs user/pass)');
+	p('   --extract           Extract data');
+	p('   --replace           Replace descriptions');	
+	p('   --verify            Verify data (needs user/pass)');
+	p('   --upload            Upload data (needs user/pass)');
 	p('');		
 	p('AS_USER, AS_PASS and AS_SKU environment variables may be set instead.');	
 	p('');		
@@ -81,4 +84,15 @@ if ($should_replace) {
  	p ("'replace' option specified; replacing descriptions using $text_dir");
 	as_replace($data_dir, $sku, $text_dir);
 }
+
+if ($should_verify) {
+ 	p ("'verify' option specified");
+	as_replace($data_dir, $sku, $text_dir);
+}
+
+if ($should_upload) {
+ 	p ("'upload' option specified");
+	as_replace($data_dir, $sku, $text_dir);
+}
+
 ?>

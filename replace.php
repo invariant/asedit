@@ -1,25 +1,25 @@
 <?php
 require_once 'util.php';
 
+//
+// replace descriptions in metadata.xml
+//
+
 $current_tags=array();
 $current_locale_name='';
 
-$depth=0;
-$pos=0;
 $xml_parser=NULL;
+$pos=0;
 $data=NULL;
 $newdata=NULL;
 
 function as_replace($data_dir, $sku, $text_dir) {
 	global $xml_parser, $data, $newdata;
-	// p($data_dir);
-	// p($sku);
-	// p($text_dir);
 
 	function copy_range($start, $end)
 	{
 		global $data, $newdata;
-		p("Copy range $start to $end");
+		//p("Copy range $start to $end");
 		$newdata.=substr($data, $start, $end-$start);
 	}
 
@@ -29,20 +29,18 @@ function as_replace($data_dir, $sku, $text_dir) {
 	}
 
 	function startTag($parser, $name, $attribs) {
-		global $current_tags, $depth, $current_locale_name;
-		$depth+=1;
+		global $current_tags, $current_locale_name;
 		$tag=strtolower($name);		
 	    array_push($current_tags, $tag);
 	    if ($tag==='locale') {	    
 	    	$current_locale_name=$attribs['NAME'];    
 	    }
-	    spaces($depth); p('+'.$name);
 	}
 
 	function endTag($parser, $name){
-		global $current_tags, $depth, $pos, $xml_parser, $text_dir, $current_locale_name;
+		global $current_tags, $pos, $xml_parser, $text_dir, $current_locale_name;
 
-		$tag=strtolower(array_pop($current_tags));
+		$tag=array_pop($current_tags);
 		
 		if ($tag==='locale') {	    
 	    	$current_locale_name='';    
@@ -59,16 +57,19 @@ function as_replace($data_dir, $sku, $text_dir) {
 			copy_range($pos, $newpos);
 			$pos=$newpos;
 		}
-
-		spaces($depth); p('-'.$tag);
-		$depth-=1;
 	}
 
 	function contents($parser, $text){
-		global $current_tags, $depth, $pos;
+		// do nothing		
 	}
 
-	$data_file=trim($data_dir)."/".$sku.".itmsp/metadata.xml";
+	$package_dir=trim($data_dir)."/".$sku.".itmsp";
+	$backup_dir=trim($data_dir)."/".$sku."-backup-".time().".itmsp";
+	$data_file=$package_dir."/metadata.xml";
+
+	# back up the package dir
+	`cp -r "$package_dir" "$backup_dir"`;
+
 	$data=file_get_contents($data_file);
 
 	$xml_parser = xml_parser_create();
@@ -78,10 +79,6 @@ function as_replace($data_dir, $sku, $text_dir) {
 	    die("Error on line " . xml_get_current_line_number($xml_parser));
 	} 
 
-	$new_data_dir=trim($data_dir)."/".$sku."-new.itmsp";
-	if (!file_exists($new_data_dir)) {
-		mkdir($new_data_dir);
-	}
-	file_put_contents($new_data_dir."/metadata.xml", $newdata);
+	file_put_contents($data_file, $newdata);
 }
 ?>

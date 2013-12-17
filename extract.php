@@ -1,57 +1,51 @@
 <?php
 require_once 'util.php';
 
+//
+// extract descriptions from metadata.xml
+//
+
 $current_tags=array();
 $current_contents=array();
 $current_locale_name='';
-$depth=0;
 
 function as_extract($data_dir, $sku, $text_dir) {
-	// p($data_dir);
-	// p($sku);
-	// p($text_dir);
 
 	function startTag($parser, $name, $attribs) {
-		global $current_tags, $current_contents, $current_locale_name, $depth;
-		$depth+=1;
+		global $current_tags, $current_contents, $current_locale_name;
 
-	    array_push($current_tags, $name);
+		$tag=strtolower($name);
+	    array_push($current_tags, $tag);
 	    array_push($current_contents, ''); 
-	    if ($name==='LOCALE') {	    
+
+	    if ($name==='locale') {	    
 	    	$current_locale_name=$attribs['NAME'];    
 	    }
-
-	    #spaces($depth); p('+'.$name);
 	}
 
 	function endTag($parser, $name){
 		global $current_tags, $current_contents, $current_locale_name, $depth, $text_dir;
 
-		$tag=strtolower(array_pop($current_tags));
+		$tag=array_pop($current_tags);
 		$contents=array_pop($current_contents);
 		
 		if ($tag==='description'||$tag==='version_whats_new') {
-			p ("Got $tag for $current_locale_name");
+			p ("Got $tag for $current_locale_name: " . strlen($contents) . "bytes");
 			$dir=trim($text_dir)."/$tag";
-			if (!file_exists($dir)) mkdir($dir, 0777, true);
-			$filename=$dir."/$current_locale_name";			
-			file_put_contents($filename, $contents);
+			if (!file_exists($dir)) {
+				mkdir($dir, 0777, true);	
+			} 			
+			file_put_contents($dir."/$current_locale_name", $contents);
 		}
-
-		#spaces($depth); p('-'.$tag);
-		$depth-=1;
 	}
 
 	function contents($parser, $data){
-		global $current_tags, $current_contents, $current_locale_name, $depth;
+		global $current_contents;
 
-		//var_dump($data);
 		$buffer=array_pop($current_contents);
 		$buffer.=$data;
 		array_push($current_contents, $buffer);
 	}
-
-
 
 	$data_file=trim($data_dir)."/".$sku.".itmsp/metadata.xml";
 	$data=file_get_contents($data_file);
