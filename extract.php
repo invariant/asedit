@@ -48,7 +48,7 @@ function as_extract($data_dir, $sku, $text_dir) {
 		//var_dump($data);
 		$buffer=array_pop($current_contents);
 		$buffer.=$data;
-		array_push($current_contents, trim($buffer));
+		array_push($current_contents, $buffer);
 	}
 
 

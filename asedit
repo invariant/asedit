@@ -1,10 +1,11 @@
 #!/usr/bin/php
 <?php
 require_once 'util.php';
-require_once 'asextract.php';
+require_once 'extract.php';
+require_once 'replace.php';
 
 # get options
-$options=getopt('', array('sku:', 'user:', 'pass:', 'get', 'extract'));
+$options=getopt('', array('sku:', 'user:', 'pass:', 'get', 'extract', 'replace'));
 #var_dump($options);
 
 $user=getenv('AS_USER');
@@ -15,6 +16,7 @@ $sku=getenv('AS_SKU');
 if (!$sku) $sku=intval($options["sku"]);
 $should_get=array_key_exists('get', $options);
 $should_extract=array_key_exists('extract', $options);
+$should_replace=array_key_exists('replace', $options);
 
 $opts_ok=true;
 
@@ -34,6 +36,7 @@ if (!$opts_ok) {
 	p('   --sku SKU           SKU for app (DwellClick=12, RapidClick=15, PopClip=19, Dropshelf=21)');	
 	p('  [--get]              Get data');
 	p('  [--extract]          Extract data');
+	p('  [--replace]          Replace descriptions');
 	p('  [--user USERNAME]    Apple ID username');	
 	p('  [--pass PASSWORD]    Apple ID password');	
 	p('');		
@@ -72,5 +75,10 @@ if ($should_get) {
 if ($should_extract) {
  	p ("'extract' option specified; extracting data to $text_dir");
 	as_extract($data_dir, $sku, $text_dir);
+}
+
+if ($should_replace) {
+ 	p ("'replace' option specified; replacing descriptions using $text_dir");
+	as_replace($data_dir, $sku, $text_dir);
 }
 ?>
