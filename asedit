@@ -70,7 +70,7 @@ if ($should_get) {
 }
 
 if ($should_extract) {
- 	p ("'extract' option sp[ecified; extracting data to $text_dir");
+ 	p ("'extract' option specified; extracting data to $text_dir");
 	as_extract($data_dir, $sku, $text_dir);
 }
 ?>
