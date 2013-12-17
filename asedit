@@ -2,7 +2,17 @@
 <?php
 require_once 'util.php';
 require_once 'extract.php';
-require_once 'replace.php';
+
+function do_transporter_call($method, $extra_params) {
+	global $transporter_dir, $working_dir, $user, $pass, $sku;
+	chdir($transporter_dir);
+	exec("./iTMSTransporter -m $method -u $user -p $pass -vendor_id $sku " . $extra_params, $output, $result);
+	chdir($working_dir);
+	if (!($result===0)) {
+		p("'$method' call failed");
+		exit(1);
+	}
+}
 
 # get options
 $options=getopt('', array('sku:', 'user:', 'pass:', 'get', 'extract', 'replace', 'verify', 'upload'));
@@ -55,24 +65,20 @@ $working_dir=getcwd();
 $transporter_dir=trim(`xcode-select --print-path`).'/../Applications/Application Loader.app/Contents/MacOS/itms/bin';
 $data_dir=trim($working_dir).'/data';
 $text_dir=trim($working_dir).'/text';
+$package="$data_dir/$sku.itmsp";
 
 p('Working directory is ' . $working_dir);
 p('Transporter directory is ' . $transporter_dir);
 p('Data directory is ' . $data_dir);
 p('Text directory is ' . $text_dir);
+p('Package is ' . $package);
 
 $output=NULL;
 $result=NULL;
 
 if ($should_get) {
 	p ("'get' option specified; getting data to $data_dir");
-	chdir($transporter_dir);
-	exec("./iTMSTransporter -m lookupMetadata -u $user -p $pass -vendor_id $sku -destination $data_dir", $output, $result);
-	chdir($working_dir);
-	if (!($result===0)) {
-		p('iTMSTransporter call failed');
-		exit(1);
-	}
+	do_transporter_call('lookupMetadata', "-destination $data_dir");
 }
 
 if ($should_extract) {
@@ -87,12 +93,12 @@ if ($should_replace) {
 
 if ($should_verify) {
  	p ("'verify' option specified");
-	as_replace($data_dir, $sku, $text_dir);
+	do_transporter_call('verify', "-f $package");
 }
 
 if ($should_upload) {
  	p ("'upload' option specified");
-	as_replace($data_dir, $sku, $text_dir);
+	do_transporter_call('upload', "-f $package");
 }
 
 ?>
